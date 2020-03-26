@@ -1,0 +1,12 @@
+List all english posts
+
+{
+  allGhostPost(sort: {order: DESC, fields: [published_at]}, filter: {tags: {elemMatch: {slug: {eq: "en"}}}}) {
+    edges {
+      node {
+        id
+        slug
+      }
+    }
+  }
+}
