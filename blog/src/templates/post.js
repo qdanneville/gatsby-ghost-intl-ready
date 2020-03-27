@@ -29,23 +29,50 @@ const Post = ({ data, location }) => {
     const intl = useIntl();
 
     let postLocal = post.tags.find(tag => tag.name === localeMap[tag.name]).name
-
-    console.log('post local :', postLocal);
-    console.log('intl local :', intl.locale);
-
-    if (postLocal !== intl.locale); {
+    
+    //If we're catching a gatsby-plugin-intl new routes:
+    //For a /welcome/ post, it creates
+    // - /en/welcome
+    // - /fr/welcome
+    // - /es/welcome
+    if (postLocal !== intl.locale) {
 
         let postToRedirect = posts.find(({ node }) => {
+
             //We have to find a intl.locale post with the same canonical url
             let local = node.tags.find(tag => tag.name === localeMap[tag.name]).name
+            let findCanonical = false;
 
-            return local === intl.locale
+            if (intl.locale === 'en') {
+                if (local !== 'en') return
+
+                findCanonical = canonicalLink && canonicalLink.includes(node.slug);
+
+                return findCanonical;
+            }
+
+            let nodeIsCorrectLocal = local === intl.locale;
+
+            if (!nodeIsCorrectLocal) return
+
+            findCanonical = canonicalLink ? node.canonical_url === canonicalLink : node.canonical_url && node.canonical_url.includes(post.slug);
+
+            return nodeIsCorrectLocal && findCanonical
         })
 
-        let newUrl = `/${intl.locale + '/' + postToRedirect.node.slug}/`
+        if (postToRedirect) {
 
-        if (newUrl !== location.pathname) navigate(newUrl)
+            //Redirecting to /post.slug/ instead of /en/post.slug/ for default language
+            let newUrl = `${intl.locale !== 'en' ? '/' + intl.locale + '/' + postToRedirect.node.slug : '/' + postToRedirect.node.slug}/`
 
+            //TODO navigate & push history precedent
+            if (newUrl !== location.pathname) navigate(newUrl, { replace: true })
+        }
+        else {
+            //No post to redirect, this post hasn't been translated
+            //Redirecting to local index
+            navigate(`/${intl.locale}/`, { replace: true });
+        }
     }
 
     return (
